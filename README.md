@@ -6,7 +6,7 @@ Quick note: this project does **not** use semantic versioning (`python parser.py
 What is this?
 -------------
 
-This is a Python script to extract [Jeopardy!] clues from the [J! Archive] website and dump them into a SQLite database for use elsewhere (no particular application is intended). Python 2.7.* and SQLite 3.7.* on *nix have been tested and confirmed to work (requires BeautifulSoup 4 and the lxml parser).
+This is a Python script to extract [Jeopardy!] clues from the [J! Archive] website and dump them into a SQLite database for use elsewhere (no particular application is intended). Python 3.13.1 and SQLite 3.49.0 on Arch Linux have been tested and confirmed to work (requires BeautifulSoup 4 and the lxml parser).
 
   [Jeopardy!]:http://www.jeopardy.com/
   [J! Archive]:http://j-archive.com/
@@ -15,7 +15,7 @@ Quick start
 -----------
 
 ```bash
-git clone git://github.com/whymarrh/jeopardy-parser.git
+git clone https://github.com/tpasreeram/jeopardy-parser.git
 cd jeopardy-parser
 pip install -r requirements.txt
 python download.py
