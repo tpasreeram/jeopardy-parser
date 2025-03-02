@@ -5,7 +5,6 @@ import itertools
 import os
 import urllib.request
 import time
-#import futures as futures  # In Python 3 we can use "import concurrent.futures as futures"
 import concurrent.futures as futures
 
 current_working_directory = os.path.dirname(os.path.abspath(__file__))
