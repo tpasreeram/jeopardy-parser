@@ -15,30 +15,30 @@ import sys
 def main(args):
     """Loop thru all the games and parse them."""
     if not os.path.isdir(args.dir):
-        print "The specified folder is not a directory."
+        print("The specified folder is not a directory.")
         sys.exit(1)
     NUMBER_OF_FILES = len(os.listdir(args.dir))
     if args.num_of_files:
         NUMBER_OF_FILES = args.num_of_files
-    print "Parsing", NUMBER_OF_FILES, "files"
+    print("Parsing", NUMBER_OF_FILES, "files")
     sql = None
     if not args.stdout:
         sql = sqlite3.connect(args.database)
         sql.execute("""PRAGMA foreign_keys = ON;""")
-        sql.execute("""CREATE TABLE airdates(
+        sql.execute("""CREATE TABLE IF NOT EXISTS airdates(
             game INTEGER PRIMARY KEY,
             airdate TEXT
         );""")
-        sql.execute("""CREATE TABLE documents(
+        sql.execute("""CREATE TABLE IF NOT EXISTS documents(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             clue TEXT,
             answer TEXT
         );""")
-        sql.execute("""CREATE TABLE categories(
+        sql.execute("""CREATE TABLE IF NOT EXISTS categories(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             category TEXT UNIQUE
         );""")
-        sql.execute("""CREATE TABLE clues(
+        sql.execute("""CREATE TABLE IF NOT EXISTS clues(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             game INTEGER,
             round INTEGER,
@@ -46,7 +46,7 @@ def main(args):
             FOREIGN KEY(id) REFERENCES documents(id),
             FOREIGN KEY(game) REFERENCES airdates(game)
         );""")
-        sql.execute("""CREATE TABLE classifications(
+        sql.execute("""CREATE TABLE IF NOT EXISTS classifications(
             clue_id INTEGER,
             category_id INTEGER,
             FOREIGN KEY(clue_id) REFERENCES clues(id),
@@ -57,7 +57,7 @@ def main(args):
             parse_game(f, sql, i)
     if not args.stdout:
         sql.commit()
-    print "All done"
+    print("All done")
 
 
 def parse_game(f, sql, gid):
@@ -65,7 +65,7 @@ def parse_game(f, sql, gid):
     bsoup = BeautifulSoup(f, "lxml")
     # The title is in the format: `J! Archive - Show #XXXX, aired 2004-09-16`,
     # where the last part is all that is required
-    airdate = bsoup.title.get_text().split()[-1]
+    airdate = bsoup.title.get_text().split()[-1] if bsoup.title else "No Title"
     if not parse_round(bsoup, sql, 1, gid, airdate) or not parse_round(bsoup, sql, 2, gid, airdate):
         # One of the rounds does not exist
         pass
@@ -76,8 +76,10 @@ def parse_game(f, sql, gid):
         return
     category = r.find("td", class_="category_name").get_text()
     text = r.find("td", class_="clue_text").get_text()
-    answer = BeautifulSoup(r.find("div", onmouseover=True).get("onmouseover"), "lxml")
-    answer = answer.find("em").get_text()
+    #answer = BeautifulSoup(r.find("div", onmouseover=True).get("onmouseover"), "lxml")
+    #print(r.prettify())
+    answer = r.find("em").get_text()
+
     # False indicates no preset value for a clue
     insert(sql, [gid, airdate, 3, category, False, text, answer])
 
@@ -100,8 +102,9 @@ def parse_round(bsoup, sql, rnd, gid, airdate):
         if not is_missing:
             value = a.find("td", class_=re.compile("clue_value")).get_text().lstrip("D: $")
             text = a.find("td", class_="clue_text").get_text()
-            answer = BeautifulSoup(a.find("div", onmouseover=True).get("onmouseover"), "lxml")
-            answer = answer.find("em", class_="correct_response").get_text()
+            #answer = BeautifulSoup(a.find("div", onmouseover=True).get("onmouseover"), "lxml")
+            #print(a.prettify())
+            answer = a.find("em", class_="correct_response").get_text()
             insert(sql, [gid, airdate, rnd, categories[x], value, text, answer])
         # Always update x, even if we skip
         # a clue, as this keeps things in order. there
@@ -126,7 +129,7 @@ def insert(sql, clue):
     if "\\\"" in clue[6]:
         clue[6] = clue[6].replace("\\\"", "\"")
     if not sql:
-        print clue
+        print(clue)
         return
     sql.execute(
         "INSERT OR IGNORE INTO airdates VALUES(?, ?);",
